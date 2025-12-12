@@ -3,6 +3,9 @@ body {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
     overflow-x: hidden;
+    /* Remove safe area padding */
+    padding-top: 0 !important;
+    margin-top: 0 !important;
 }
 
 /* 3D Flip Effects */

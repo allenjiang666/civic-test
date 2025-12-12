@@ -29,6 +29,51 @@ const labelFlip = document.getElementById('label-flip');
 // Speech synthesis
 let speechSynthesis = window.speechSynthesis;
 let currentUtterance = null;
+let englishVoice = null;
+
+// Function to find the best English voice
+function findEnglishVoice() {
+    const voices = speechSynthesis.getVoices();
+
+    // Priority order for English voices
+    const preferredVoices = [
+        'Google US English',
+        'Samantha',           // iOS default English voice
+        'Karen',              // iOS Australian English
+        'Daniel',             // iOS British English
+        'Alex',               // macOS English
+        'en-US',
+        'en_US',
+        'en-GB',
+        'English'
+    ];
+
+    // Try to find preferred voices first
+    for (const preferred of preferredVoices) {
+        const found = voices.find(voice =>
+            voice.name.includes(preferred) ||
+            voice.lang.includes(preferred)
+        );
+        if (found) {
+            console.log('Found preferred voice:', found.name, found.lang);
+            return found;
+        }
+    }
+
+    // Fallback: find any English voice
+    const englishVoice = voices.find(voice =>
+        voice.lang.startsWith('en') ||
+        voice.name.toLowerCase().includes('english')
+    );
+
+    if (englishVoice) {
+        console.log('Using fallback English voice:', englishVoice.name, englishVoice.lang);
+        return englishVoice;
+    }
+
+    console.log('No English voice found, using default');
+    return null;
+}
 
 function readAloud() {
     // Stop any ongoing speech
@@ -45,17 +90,12 @@ function readAloud() {
 
     currentUtterance = new SpeechSynthesisUtterance(textToRead);
     currentUtterance.lang = 'en-US';
-    currentUtterance.rate = 0.9; // Slightly slower for clarity
+    currentUtterance.rate = 0.9;
 
-    // Try to use Google US English voice
-    const voices = speechSynthesis.getVoices();
-    const googleVoice = voices.find(voice =>
-        voice.name.includes('Google US English') ||
-        voice.name.includes('Google') && voice.lang === 'en-US'
-    );
-
-    if (googleVoice) {
-        currentUtterance.voice = googleVoice;
+    // Get English voice
+    const voice = findEnglishVoice();
+    if (voice) {
+        currentUtterance.voice = voice;
     }
 
     // Visual feedback
@@ -90,15 +130,10 @@ function readAloudAnswer() {
     currentUtterance.lang = 'en-US';
     currentUtterance.rate = 0.9;
 
-    // Try to use Google US English voice
-    const voices = speechSynthesis.getVoices();
-    const googleVoice = voices.find(voice =>
-        voice.name.includes('Google US English') ||
-        voice.name.includes('Google') && voice.lang === 'en-US'
-    );
-
-    if (googleVoice) {
-        currentUtterance.voice = googleVoice;
+    // Get English voice
+    const voice = findEnglishVoice();
+    if (voice) {
+        currentUtterance.voice = voice;
     }
 
     // Visual feedback
