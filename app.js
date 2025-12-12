@@ -35,43 +35,31 @@ let englishVoice = null;
 function findEnglishVoice() {
     const voices = speechSynthesis.getVoices();
 
-    // Priority order for English voices
-    const preferredVoices = [
-        'Google US English',
-        'Samantha',           // iOS default English voice
-        'Karen',              // iOS Australian English
-        'Daniel',             // iOS British English
-        'Alex',               // macOS English
-        'en-US',
-        'en_US',
-        'en-GB',
-        'English'
-    ];
-
-    // Try to find preferred voices first
-    for (const preferred of preferredVoices) {
-        const found = voices.find(voice =>
-            voice.name.includes(preferred) ||
-            voice.lang.includes(preferred)
-        );
-        if (found) {
-            console.log('Found preferred voice:', found.name, found.lang);
-            return found;
-        }
-    }
-
-    // Fallback: find any English voice
-    const englishVoice = voices.find(voice =>
-        voice.lang.startsWith('en') ||
-        voice.name.toLowerCase().includes('english')
+    // 1. Try to find specific high-quality iOS/macOS voices
+    const iosVoices = ['Samantha', 'Karen', 'Daniel', 'Moira', 'Rishi', 'Tessa'];
+    const bestMatch = voices.find(voice =>
+        iosVoices.some(name => voice.name.includes(name)) && voice.lang.startsWith('en')
     );
-
-    if (englishVoice) {
-        console.log('Using fallback English voice:', englishVoice.name, englishVoice.lang);
-        return englishVoice;
+    if (bestMatch) {
+        console.log('Found iOS premium voice:', bestMatch.name);
+        return bestMatch;
     }
 
-    console.log('No English voice found, using default');
+    // 2. Try to find any en-US voice
+    const usVoice = voices.find(voice => voice.lang === 'en-US' || voice.lang === 'en_US');
+    if (usVoice) {
+        console.log('Found US English voice:', usVoice.name);
+        return usVoice;
+    }
+
+    // 3. Fallback: find any English voice
+    const anyEnglishFn = voices.find(voice => voice.lang.startsWith('en'));
+    if (anyEnglishFn) {
+        console.log('Found fallback English voice:', anyEnglishFn.name);
+        return anyEnglishFn;
+    }
+
+    console.log('No English voice found in list of ' + voices.length + ' voices');
     return null;
 }
 
@@ -89,10 +77,10 @@ function readAloud() {
     const textToRead = card.q_en;
 
     currentUtterance = new SpeechSynthesisUtterance(textToRead);
-    currentUtterance.lang = 'en-US';
+    currentUtterance.lang = 'en-US'; // Explicitly request en-US
     currentUtterance.rate = 0.9;
 
-    // Get English voice
+    // Attempt to force an English voice object
     const voice = findEnglishVoice();
     if (voice) {
         currentUtterance.voice = voice;
@@ -102,6 +90,11 @@ function readAloud() {
     readAloudBtn.classList.add('bg-green-200');
 
     currentUtterance.onend = () => {
+        readAloudBtn.classList.remove('bg-green-200');
+    };
+
+    currentUtterance.onerror = (e) => {
+        console.error('Speech error:', e);
         readAloudBtn.classList.remove('bg-green-200');
     };
 
@@ -130,7 +123,7 @@ function readAloudAnswer() {
     currentUtterance.lang = 'en-US';
     currentUtterance.rate = 0.9;
 
-    // Get English voice
+    // Attempt to force an English voice object
     const voice = findEnglishVoice();
     if (voice) {
         currentUtterance.voice = voice;
@@ -140,6 +133,11 @@ function readAloudAnswer() {
     readAloudAnswerBtn.classList.add('bg-green-600');
 
     currentUtterance.onend = () => {
+        readAloudAnswerBtn.classList.remove('bg-green-600');
+    };
+
+    currentUtterance.onerror = (e) => {
+        console.error('Speech error:', e);
         readAloudAnswerBtn.classList.remove('bg-green-600');
     };
 
@@ -291,9 +289,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load voices (needed for some browsers)
     if (speechSynthesis.onvoiceschanged !== undefined) {
         speechSynthesis.onvoiceschanged = () => {
+            console.log('Voices changed, loading...');
             speechSynthesis.getVoices();
         };
     }
+
+    // Explicitly call getVoices once to trigger loading
+    speechSynthesis.getVoices();
+
+    // iOS Audio Context / Voice Unlock
+    const unlockAudio = () => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            console.log('Audio unlocked, voices found:', voices.length);
+            document.body.removeEventListener('touchstart', unlockAudio);
+            document.body.removeEventListener('click', unlockAudio);
+        }
+    };
+
+    document.body.addEventListener('touchstart', unlockAudio);
+    document.body.addEventListener('click', unlockAudio);
 
     updateCard();
 });
