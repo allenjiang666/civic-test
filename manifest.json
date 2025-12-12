@@ -2,7 +2,7 @@
     "name": "U.S. Civics Quiz - Naturalization Test",
     "short_name": "Civics Quiz",
     "description": "Study for the U.S. Citizenship Naturalization Test with bilingual flashcards (English/Chinese)",
-    "start_url": "/",
+    "start_url": "./",
     "display": "standalone",
     "background_color": "#f5f7fa",
     "theme_color": "#3b82f6",
